@@ -5,14 +5,15 @@ import { motion } from "framer-motion";
 import { NavBar } from "@/components/NavBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ARCHITECTURE_DIAGRAM } from "@/lib/mockData";
 import Link from "next/link";
 import { Network } from "lucide-react";
+import { useDdrAnalytics } from "@/lib/useDdrAnalytics";
 
 export default function ArchitecturePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgContent, setSvgContent] = useState<string>("");
   const [isVisible, setIsVisible] = useState(false);
+  const { data } = useDdrAnalytics();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
@@ -45,7 +46,8 @@ export default function ArchitecturePage() {
           },
         });
         const id = "mermaid-" + Date.now();
-        const { svg } = await mermaid.render(id, ARCHITECTURE_DIAGRAM);
+        const source = data?.architectureDiagram ?? "graph TD; A[DDR]-->B[Analysis];";
+        const { svg } = await mermaid.render(id, source);
         setSvgContent(svg);
       } catch (err) {
         setSvgContent(
@@ -107,7 +109,8 @@ export default function ArchitecturePage() {
                 </div>
                 <div className="mt-6 rounded-lg border border-border bg-muted/10 p-4 font-mono text-sm text-muted-foreground">
                   <pre className="overflow-x-auto whitespace-pre-wrap break-words">
-                    {ARCHITECTURE_DIAGRAM}
+                    {data?.architectureDiagram ??
+                      "graph TD; A[DDR]-->B[Analysis];"}
                   </pre>
                 </div>
               </CardContent>

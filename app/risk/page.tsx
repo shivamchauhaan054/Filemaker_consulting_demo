@@ -19,8 +19,8 @@ import {
 } from "recharts";
 import { NavBar } from "@/components/NavBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MOCK_RADAR_DATA, MOCK_BAR_DATA } from "@/lib/mockData";
 import { AlertTriangle, Activity } from "lucide-react";
+import { useDdrAnalytics } from "@/lib/useDdrAnalytics";
 
 const riskLevels = [
   { level: "Low", range: "0-40", color: "bg-emerald-500", label: "Low Risk" },
@@ -35,6 +35,7 @@ const riskLevels = [
 
 export default function RiskPage() {
   const [isVisible, setIsVisible] = useState(false);
+  const { data, loading } = useDdrAnalytics();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
@@ -54,8 +55,14 @@ export default function RiskPage() {
             Risk Visualization
           </h1>
           <p className="mb-10 text-muted-foreground">
-            Multi-dimensional risk assessment across key metrics
+            Multi-dimensional risk assessment computed from your DDR XML
           </p>
+          {!loading && !data && (
+            <div className="mb-8 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+              No analysis found. Please upload a DDR XML file first on the
+              upload page.
+            </div>
+          )}
           <div className="grid gap-8 lg:grid-cols-2">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -75,7 +82,7 @@ export default function RiskPage() {
                 <CardContent>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={MOCK_RADAR_DATA}>
+                      <RadarChart data={data?.radarData ?? []}>
                         <PolarGrid stroke="hsl(217, 33%, 30%)" />
                         <PolarAngleAxis
                           dataKey="subject"
@@ -115,7 +122,11 @@ export default function RiskPage() {
                 <CardContent>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={MOCK_BAR_DATA} layout="vertical" margin={{ left: 20 }}>
+                      <BarChart
+                        data={data?.barData ?? []}
+                        layout="vertical"
+                        margin={{ left: 20 }}
+                      >
                         <CartesianGrid
                           strokeDasharray="3 3"
                           stroke="hsl(217, 33%, 20%)"

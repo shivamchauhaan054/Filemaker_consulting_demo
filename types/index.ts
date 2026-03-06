@@ -32,3 +32,31 @@ export interface RadarChartData {
   fullMark: number;
 }
 
+export interface DdrTotals {
+  totalTables: number;
+  totalFields: number;
+  totalRelationships: number;
+  totalScripts: number;
+  totalLayouts: number;
+  totalValueLists: number;
+  totalCustomFunctions: number;
+}
+
+export interface DdrBarDatum {
+  name: string;
+  value: number;
+  fill: string;
+}
+
+export interface DdrAnalyticsResponse {
+  id: string;
+  fileName: string;
+  totals: DdrTotals & { scriptSteps: number };
+  scores: AssessmentScores;
+  radarData: RadarChartData[];
+  barData: DdrBarDatum[];
+  consultingReport: ConsultingReport;
+  architectureDiagram: string;
+}
+
+

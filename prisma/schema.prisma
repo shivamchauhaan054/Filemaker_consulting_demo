@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model DdrAnalysis {
+  id                  String   @id @default(cuid())
+  createdAt           DateTime @default(now())
+
+  fileName            String
+  rawXmlSize          Int
+
+  totalTables         Int
+  totalFields         Int
+  totalRelationships  Int
+  totalScripts        Int
+  totalLayouts        Int
+  totalValueLists     Int
+  totalCustomFunctions Int
+
+  technicalDebt       Int
+  schemaComplexity    Int
+  scriptComplexity    Int
+  migrationDifficulty Int
+  riskIndex           Int
+}
+

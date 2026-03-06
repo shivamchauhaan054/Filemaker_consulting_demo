@@ -6,13 +6,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { NavBar } from "@/components/NavBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileCode, Loader2, CheckCircle2 } from "lucide-react";
+import { FileCode, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import type { DdrAnalyticsResponse } from "@/types";
 
 export default function UploadPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -31,9 +33,9 @@ export default function UploadPage() {
       setIsDragging(false);
       const file = e.dataTransfer.files[0];
       if (file && (file.name.endsWith(".xml") || file.type === "text/xml")) {
-        processFile(file);
+        void processFile(file);
       } else {
-        processFile(new File(["<mock/>"], "ddr_report.xml", { type: "text/xml" }));
+        setError("Please upload a valid DDR XML (.xml) file.");
       }
     },
     []
@@ -43,21 +45,57 @@ export default function UploadPage() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        processFile(file);
+        void processFile(file);
       }
     },
     []
   );
 
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     setFileName(file.name);
     setIsProcessing(true);
     setIsComplete(false);
+    setError(null);
 
-    setTimeout(() => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload-ddr", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        const message =
+          payload?.error ??
+          (res.status === 413
+            ? "File is too large for this demo. Please upload a smaller DDR export."
+            : "Failed to analyze DDR XML.");
+        setError(message);
+        setIsProcessing(false);
+        return;
+      }
+
+      const analytics = (await res.json()) as DdrAnalyticsResponse;
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem("ddrAnalytics", JSON.stringify(analytics));
+      }
+
       setIsProcessing(false);
       setIsComplete(true);
-    }, 3500);
+
+      setTimeout(() => {
+        router.push("/analysis");
+      }, 800);
+    } catch (err) {
+      console.error(err);
+      setError("Unexpected error while uploading or analyzing DDR.");
+      setIsProcessing(false);
+    }
   };
 
   const handleContinue = () => {
@@ -79,6 +117,12 @@ export default function UploadPage() {
           <p className="mb-8 text-muted-foreground">
             Upload your FileMaker Data Dictionary Report (DDR) for AI analysis
           </p>
+          {error && (
+            <div className="mb-4 flex items-start gap-2 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
           <Card
             className={`overflow-hidden transition-all duration-300 ${
               isDragging ? "border-primary ring-2 ring-primary/30" : ""
@@ -119,22 +163,6 @@ export default function UploadPage() {
                         onChange={handleFileInput}
                         className="hidden"
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-4"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          processFile(
-                            new File(["<mock/>"], "ddr_report.xml", {
-                              type: "text/xml",
-                            })
-                          );
-                        }}
-                      >
-                        Use Demo Data
-                      </Button>
                     </label>
                   </motion.div>
                 )}

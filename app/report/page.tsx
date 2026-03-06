@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { NavBar } from "@/components/NavBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MOCK_CONSULTING_REPORT } from "@/lib/mockData";
 import Link from "next/link";
 import {
   FileText,
@@ -14,17 +13,18 @@ import {
   Calendar,
   Lightbulb,
 } from "lucide-react";
+import { useDdrAnalytics } from "@/lib/useDdrAnalytics";
 
 export default function ReportPage() {
   const [isVisible, setIsVisible] = useState(false);
+  const { data } = useDdrAnalytics();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
 
-  const { executiveSummary, recommendations, roiEstimate } =
-    MOCK_CONSULTING_REPORT;
+  const consulting = data?.consultingReport;
 
   return (
     <div className="min-h-screen">
@@ -54,7 +54,7 @@ export default function ReportPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {executiveSummary.map((paragraph, i) => (
+                {consulting?.executiveSummary.map((paragraph, i) => (
                   <motion.p
                     key={i}
                     initial={{ opacity: 0 }}
@@ -78,8 +78,8 @@ export default function ReportPage() {
               <Lightbulb className="h-5 w-5 text-primary" />
               Modernization Recommendation
             </h2>
-            <div className="space-y-6">
-              {recommendations.map((rec, i) => (
+              <div className="space-y-6">
+              {consulting?.recommendations.map((rec, i) => (
                 <motion.div
                   key={rec.title}
                   initial={{ opacity: 0, x: -20 }}
@@ -130,7 +130,8 @@ export default function ReportPage() {
                       Estimated Migration Cost
                     </p>
                     <p className="text-2xl font-bold text-foreground">
-                      ${roiEstimate.estimatedMigrationCost.toLocaleString()}
+                      $
+                      {consulting?.roiEstimate.estimatedMigrationCost.toLocaleString()}
                     </p>
                   </div>
                   <div className="rounded-lg border border-border bg-muted/20 p-6">
@@ -139,7 +140,7 @@ export default function ReportPage() {
                     </p>
                     <p className="flex items-center gap-2 text-2xl font-bold text-emerald-400">
                       <TrendingUp className="h-6 w-6" />
-                      {roiEstimate.threeYearROI}%
+                      {consulting?.roiEstimate.threeYearROI}%
                     </p>
                   </div>
                   <div className="rounded-lg border border-border bg-muted/20 p-6">
@@ -148,7 +149,7 @@ export default function ReportPage() {
                     </p>
                     <p className="flex items-center gap-2 text-2xl font-bold text-foreground">
                       <Calendar className="h-6 w-6 text-primary" />
-                      {roiEstimate.breakEvenMonths} months
+                      {consulting?.roiEstimate.breakEvenMonths} months
                     </p>
                   </div>
                 </div>
